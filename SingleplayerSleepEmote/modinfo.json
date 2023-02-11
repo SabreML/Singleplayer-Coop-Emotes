@@ -1,0 +1,8 @@
+{
+    "id": "sabreml.singleplayersleepemote",
+    "name": "Singleplayer Sleep Emote",
+    "version": "1.0.0",
+    "target_game_version": "v1.9.04",
+    "authors": "SabreML",
+    "description": "Makes the Jolly Co-op sleep emote work in singleplayer!"
+}
