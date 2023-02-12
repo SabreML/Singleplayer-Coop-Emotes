@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Security.Permissions;
 using MonoMod.RuntimeDetour;
 using System;
+using UnityEngine;
 
 #pragma warning disable CS0618
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -21,19 +22,27 @@ namespace SingleplayerCoopEmotes
 		private void Init(On.RainWorld.orig_OnModsInit orig, RainWorld self)
 		{
 			orig(self);
-			// If the DLC is installed on Steam, and Jolly Co-op isn't currently loaded. (No reason to change anything otherwise)
-			if (RWCustom.Custom.rainWorld.dlcVersion > 0 && !ModManager.JollyCoop)
+			if (self.dlcVersion < 1)
 			{
-				On.Player.JollyUpdate += JollyUpdateHK;
-				On.Player.checkInput += checkInputHK;
-				On.Player.GraphicsModuleUpdated += GraphicsModuleUpdatedHK;
-
-				// Manual hook to override the `Player.RevealMap` property getter.
-				new Hook(
-					typeof(Player).GetProperty("RevealMap", BindingFlags.Public | BindingFlags.Instance).GetGetMethod(),
-					typeof(SingleplayerCoopEmotes).GetMethod(nameof(get_RevealMapHK), BindingFlags.NonPublic | BindingFlags.Static)
-				);
+				Debug.Log("(SPCoopEmotes) DLC not detected!");
+				return;
 			}
+			if (ModManager.JollyCoop)
+			{
+				Debug.Log("(SPCoopEmotes) Jolly Co-op is enabled!");
+				return;
+			}
+
+			// Only hook if the DLC is installed on Steam and Jolly Co-op isn't currently loaded. (No reason to change anything otherwise)
+			On.Player.JollyUpdate += JollyUpdateHK;
+			On.Player.checkInput += checkInputHK;
+			On.Player.GraphicsModuleUpdated += GraphicsModuleUpdatedHK;
+
+			// Manual hook to override the `Player.RevealMap` property getter.
+			new Hook(
+				typeof(Player).GetProperty("RevealMap", BindingFlags.Public | BindingFlags.Instance).GetGetMethod(),
+				typeof(SingleplayerCoopEmotes).GetMethod(nameof(get_RevealMapHK), BindingFlags.NonPublic | BindingFlags.Static)
+			);
 		}
 
 		private static void JollyUpdateHK(On.Player.orig_JollyUpdate orig, Player self, bool eu)
