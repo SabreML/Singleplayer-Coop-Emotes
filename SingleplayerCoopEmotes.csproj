@@ -7,8 +7,8 @@
     <ProjectGuid>{32FB7380-F5F5-498D-B802-78E17EFB66BB}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SingleplayerSleepEmote</RootNamespace>
-    <AssemblyName>SingleplayerSleepEmote</AssemblyName>
+    <RootNamespace>SingleplayerCoopEmotes</RootNamespace>
+    <AssemblyName>SingleplayerCoopEmotes</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -34,7 +34,7 @@
     <RunPostBuildEvent>Always</RunPostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="SingleplayerSleepEmote.cs" />
+    <Compile Include="SingleplayerCoopEmotes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -48,6 +48,10 @@
     </Reference>
     <Reference Include="HOOKS-Assembly-CSharp">
       <HintPath>..\..\DLLs\HOOKS-Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="MonoMod.RuntimeDetour">
+      <HintPath>..\..\DLLs\Additional\MonoMod.RuntimeDetour.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine">
