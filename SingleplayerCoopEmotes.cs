@@ -2,7 +2,6 @@
 using System.Reflection;
 using System.Security.Permissions;
 using MonoMod.RuntimeDetour;
-using UnityEngine;
 using System;
 
 #pragma warning disable CS0618
@@ -27,6 +26,7 @@ namespace SingleplayerCoopEmotes
 			{
 				On.Player.JollyUpdate += JollyUpdateHK;
 				On.Player.checkInput += checkInputHK;
+				On.Player.GraphicsModuleUpdated += GraphicsModuleUpdatedHK;
 
 				// Manual hook to override the `Player.RevealMap` property getter.
 				new Hook(
@@ -64,16 +64,29 @@ namespace SingleplayerCoopEmotes
 			self.JollyPointUpdate();
 		}
 
+		// When Jolly Co-op is active and the jolly button is held, the `checkInput()` method skips opening the map
+		// and sets the player's movement input as the pointing direction.
 		private static void checkInputHK(On.Player.orig_checkInput orig, Player self)
 		{
-			// Temporarily make it think that Jolly Co-op is loaded so that it checks for `jollyButtonDown`.
+			// Temporarily make the method think that Jolly Co-op is loaded so that it properly checks for `jollyButtonDown`.
 			// (Doing it this way is a lot easier than trying to edit the method.)
 			ModManager.CoopAvailable = true;
 			orig(self);
 			ModManager.CoopAvailable = false;
 		}
 
-		// Same as the original getter except without a `ModManager.CoopAvailable` check.
+		// When Jolly Co-op is active and the jolly button is held, the `GraphicsModuleUpdated()` method makes held spears
+		// point in the direction indicated by the player.
+		private void GraphicsModuleUpdatedHK(On.Player.orig_GraphicsModuleUpdated orig, Player self, bool actuallyViewed, bool eu)
+		{
+			// And the same thing as above here. It's a bit hacky, but it works.
+			ModManager.CoopAvailable = true;
+			orig(self, actuallyViewed, eu);
+			ModManager.CoopAvailable = false;
+		}
+
+
+		// Same as the original, except without a `ModManager.CoopAvailable` check.
 		private static bool get_RevealMapHK(Func<Player, bool> orig, Player self)
 		{
 			return !self.jollyButtonDown && self.input[0].mp && !self.inVoidSea;
