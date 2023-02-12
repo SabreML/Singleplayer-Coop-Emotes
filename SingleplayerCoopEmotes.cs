@@ -14,12 +14,12 @@ namespace SingleplayerCoopEmotes
 	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.1.0")]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
-		public void OnEnable()
+		public static void OnEnable()
 		{
 			On.RainWorld.OnModsInit += Init;
 		}
 
-		private void Init(On.RainWorld.orig_OnModsInit orig, RainWorld self)
+		private static void Init(On.RainWorld.orig_OnModsInit orig, RainWorld self)
 		{
 			orig(self);
 			if (self.dlcVersion < 1)
@@ -86,7 +86,7 @@ namespace SingleplayerCoopEmotes
 
 		// When Jolly Co-op is active and the jolly button is held, the `GraphicsModuleUpdated()` method makes held spears
 		// point in the direction indicated by the player.
-		private void GraphicsModuleUpdatedHK(On.Player.orig_GraphicsModuleUpdated orig, Player self, bool actuallyViewed, bool eu)
+		private static void GraphicsModuleUpdatedHK(On.Player.orig_GraphicsModuleUpdated orig, Player self, bool actuallyViewed, bool eu)
 		{
 			// And the same thing as above here. It's a bit hacky, but it works.
 			ModManager.CoopAvailable = true;
