@@ -1,7 +1,6 @@
 ﻿using BepInEx;
 using System.Reflection;
 using System.Security.Permissions;
-using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using System;
 using UnityEngine;
@@ -38,11 +37,9 @@ namespace SingleplayerCoopEmotes
 
 			// Regular hooks.
 			On.Player.JollyUpdate += JollyUpdateHK;
+			On.Player.JollyPointUpdate += JollyPointUpdateHK;
 			On.Player.checkInput += checkInputHK;
 			On.Player.GraphicsModuleUpdated += GraphicsModuleUpdatedHK;
-
-			// IL hook to remove a check in `JollyPointUpdate()`.
-			IL.Player.JollyPointUpdate += JollyPointUpdateHK_IL;
 
 			// Manual hook to override the `Player.RevealMap` property getter.
 			new Hook(
@@ -50,6 +47,7 @@ namespace SingleplayerCoopEmotes
 				typeof(SingleplayerCoopEmotes).GetMethod(nameof(get_RevealMapHK), BindingFlags.NonPublic | BindingFlags.Static)
 			);
 		}
+
 
 		private static void JollyUpdateHK(On.Player.orig_JollyUpdate orig, Player self, bool eu)
 		{
@@ -79,26 +77,21 @@ namespace SingleplayerCoopEmotes
 			self.JollyPointUpdate();
 		}
 
-		// Removes the `if (vector == Vector2.zero)` check from `JollyPointUpdate()`.
-		//
-		// This is to restore the (likely unintentional) functionality of pointing with no movement input
-		// making your slugcat face towards the screen.
-		// Added by request :)
-		private static void JollyPointUpdateHK_IL(ILContext il)
-		{
-			ILCursor cursor = new ILCursor(il);
 
-			// Try to move the cursor onto the line that gets `Vector2.zero`.
-			if (!cursor.TryGotoNext(i => i.MatchCall<Vector2>("get_zero")))
+		// Restores the (most likely unintentional) functionality from the 1.5 version of
+		// pointing with no movement input making your slugcat face towards the screen.
+		// (Technically, making them face towards the hand rendered behind their body.)
+		//
+		// Added by request :)
+		private static void JollyPointUpdateHK(On.Player.orig_JollyPointUpdate orig, Player self)
+		{
+			orig(self);
+			if (self.jollyButtonDown && self.PointDir() == Vector2.zero)
 			{
-				Debug.Log("(SPCoopEmotes) Unable to find IL call.");
-				return;
+				(self.graphicsModule as PlayerGraphics).LookAtPoint(self.mainBodyChunk.pos, 10f);
 			}
-			// Move the cursor back one line to `ldloc.2`.
-			cursor.Index--;
-			// Remove 5 lines. (`ldloc.2` to `ret`)
-			cursor.RemoveRange(5);
 		}
+
 
 		// When Jolly Co-op is active and the jolly button is held, the `checkInput()` method skips opening the map
 		// and sets the player's movement input as the pointing direction.
@@ -110,6 +103,7 @@ namespace SingleplayerCoopEmotes
 			orig(self);
 			ModManager.CoopAvailable = false;
 		}
+
 
 		// When Jolly Co-op is active and the jolly button is held, the `GraphicsModuleUpdated()` method makes held spears
 		// point in the direction indicated by the player.
