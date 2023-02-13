@@ -14,7 +14,7 @@ namespace SingleplayerCoopEmotes
 	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.1.0")]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
-		public static void OnEnable()
+		public void OnEnable()
 		{
 			On.RainWorld.OnModsInit += Init;
 		}
