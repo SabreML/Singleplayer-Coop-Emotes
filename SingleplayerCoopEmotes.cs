@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using System.Reflection;
 using System.Security.Permissions;
+using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using System;
 using UnityEngine;
@@ -24,19 +25,24 @@ namespace SingleplayerCoopEmotes
 			orig(self);
 			if (self.dlcVersion < 1)
 			{
-				Debug.Log("(SPCoopEmotes) DLC not detected!");
+				Debug.Log("(SPCoopEmotes) Error: DLC not detected!");
 				return;
 			}
 			if (ModManager.JollyCoop)
 			{
-				Debug.Log("(SPCoopEmotes) Jolly Co-op is enabled!");
+				Debug.Log("(SPCoopEmotes) Error: Jolly Co-op is enabled!");
 				return;
 			}
 
-			// Only hook if the DLC is installed on Steam and Jolly Co-op isn't currently loaded. (No reason to change anything otherwise)
+			// Only load the hooks if the DLC is installed on Steam and Jolly Co-op isn't currently loaded. (No reason to change anything otherwise)
+
+			// Regular hooks.
 			On.Player.JollyUpdate += JollyUpdateHK;
 			On.Player.checkInput += checkInputHK;
 			On.Player.GraphicsModuleUpdated += GraphicsModuleUpdatedHK;
+
+			// IL hook to remove a check in `JollyPointUpdate()`.
+			IL.Player.JollyPointUpdate += JollyPointUpdateHK_IL;
 
 			// Manual hook to override the `Player.RevealMap` property getter.
 			new Hook(
@@ -71,6 +77,27 @@ namespace SingleplayerCoopEmotes
 			}
 			// Pointing emote things.
 			self.JollyPointUpdate();
+		}
+
+		// Removes the `if (vector == Vector2.zero)` check from `JollyPointUpdate()`.
+		//
+		// This is to restore the (likely unintentional) functionality of pointing with no movement input
+		// making your slugcat face towards the screen.
+		// Added by request :)
+		private static void JollyPointUpdateHK_IL(ILContext il)
+		{
+			ILCursor cursor = new ILCursor(il);
+
+			// Try to move the cursor onto the line that gets `Vector2.zero`.
+			if (!cursor.TryGotoNext(i => i.MatchCall<Vector2>("get_zero")))
+			{
+				Debug.Log("(SPCoopEmotes) Unable to find IL call.");
+				return;
+			}
+			// Move the cursor back one line to `ldloc.2`.
+			cursor.Index--;
+			// Remove 5 lines. (`ldloc.2` to `ret`)
+			cursor.RemoveRange(5);
 		}
 
 		// When Jolly Co-op is active and the jolly button is held, the `checkInput()` method skips opening the map
