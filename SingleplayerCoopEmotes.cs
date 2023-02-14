@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace SingleplayerCoopEmotes
 {
-	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.1.0")]
+	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.1.1")]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
 		public void OnEnable()
@@ -38,8 +38,8 @@ namespace SingleplayerCoopEmotes
 			// Regular hooks.
 			On.Player.JollyUpdate += JollyUpdateHK;
 			On.Player.JollyPointUpdate += JollyPointUpdateHK;
-			On.Player.checkInput += checkInputHK;
 			On.Player.GraphicsModuleUpdated += GraphicsModuleUpdatedHK;
+			On.Player.checkInput += checkInputHK;
 
 			// Manual hook to override the `Player.RevealMap` property getter.
 			new Hook(
@@ -51,8 +51,12 @@ namespace SingleplayerCoopEmotes
 
 		private static void JollyUpdateHK(On.Player.orig_JollyUpdate orig, Player self, bool eu)
 		{
-			// If this is hooked then the check above must have passed, so we don't need to worry about conflicts.
+			// If this is hooked then the checks above must have passed, so we don't need to worry about it trying to emote twice.
 			orig(self, eu);
+			if (self.isNPC || self.room == null)
+			{
+				return;
+			}
 
 			// Sleeping emote things.
 			self.JollyEmoteUpdate();
@@ -93,25 +97,28 @@ namespace SingleplayerCoopEmotes
 		}
 
 
-		// When Jolly Co-op is active and the jolly button is held, the `checkInput()` method skips opening the map
-		// and sets the player's movement input as the pointing direction.
-		private static void checkInputHK(On.Player.orig_checkInput orig, Player self)
-		{
-			// Temporarily make the method think that Jolly Co-op is loaded so that it properly checks for `jollyButtonDown`.
-			// (Doing it this way is a lot easier than trying to edit the method.)
-			ModManager.CoopAvailable = true;
-			orig(self);
-			ModManager.CoopAvailable = false;
-		}
-
-
 		// When Jolly Co-op is active and the jolly button is held, the `GraphicsModuleUpdated()` method makes held spears
 		// point in the direction indicated by the player.
 		private static void GraphicsModuleUpdatedHK(On.Player.orig_GraphicsModuleUpdated orig, Player self, bool actuallyViewed, bool eu)
 		{
-			// And the same thing as above here. It's a bit hacky, but it works.
+			// Temporarily make the method think that Jolly Co-op is loaded so that it properly checks for `jollyButtonDown`.
+			// (Doing it this way is a lot easier than trying to edit the method.)
 			ModManager.CoopAvailable = true;
 			orig(self, actuallyViewed, eu);
+			ModManager.CoopAvailable = false;
+		}
+
+
+		// When Jolly Co-op is active and the jolly button is held, the `checkInput()` method skips opening the map
+		// and sets the player's movement input as the pointing direction.
+		private static void checkInputHK(On.Player.orig_checkInput orig, Player self)
+		{
+			// And a similar thing as above here. It's a bit hacky, but it works.
+			if (!self.isNPC)
+			{
+				ModManager.CoopAvailable = true; // Don't do this for NPCs because it can break their AI.
+			}
+			orig(self);
 			ModManager.CoopAvailable = false;
 		}
 
