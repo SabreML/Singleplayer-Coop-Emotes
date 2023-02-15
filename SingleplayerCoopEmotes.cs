@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace SingleplayerCoopEmotes
 {
-	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.1.1")]
+	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.1.2")]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
 		public void OnEnable()
@@ -101,11 +101,24 @@ namespace SingleplayerCoopEmotes
 		// point in the direction indicated by the player.
 		private static void GraphicsModuleUpdatedHK(On.Player.orig_GraphicsModuleUpdated orig, Player self, bool actuallyViewed, bool eu)
 		{
-			// Temporarily make the method think that Jolly Co-op is loaded so that it properly checks for `jollyButtonDown`.
-			// (Doing it this way is a lot easier than trying to edit the method.)
-			ModManager.CoopAvailable = true;
 			orig(self, actuallyViewed, eu);
-			ModManager.CoopAvailable = false;
+
+			// Recreation of the checks that need to pass in the base method to point a spear, but with the `ModManager.CoopAvailable` check removed.
+			for (int i = 0; i < self.grasps.Length; i++)
+			{
+				if (self.grasps[i] == null || !actuallyViewed || !self.jollyButtonDown || self.handPointing != i)
+				{
+					return;
+				}
+				if (!(self.grasps[i].grabbed is Spear) || self.bodyMode == Player.BodyModeIndex.Crawl || self.animation == Player.AnimationIndex.ClimbOnBeam)
+				{
+					return;
+				}
+				Spear playerSpear = self.grasps[i].grabbed as Spear;
+
+				playerSpear.setRotation = self.PointDir();
+				playerSpear.rotationSpeed = 0f;
+			}
 		}
 
 
@@ -113,7 +126,7 @@ namespace SingleplayerCoopEmotes
 		// and sets the player's movement input as the pointing direction.
 		private static void checkInputHK(On.Player.orig_checkInput orig, Player self)
 		{
-			// And a similar thing as above here. It's a bit hacky, but it works.
+			// Temporarily make the method think that Jolly Co-op is loaded so that it checks for `jollyButtonDown`.
 			if (!self.isNPC)
 			{
 				ModManager.CoopAvailable = true; // Don't do this for NPCs because it can break their AI.
