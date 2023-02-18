@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace SingleplayerCoopEmotes
 {
-	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.1.2")]
+	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.1.3")]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
 		public void OnEnable()
@@ -40,6 +40,7 @@ namespace SingleplayerCoopEmotes
 			On.Player.JollyPointUpdate += JollyPointUpdateHK;
 			On.Player.GraphicsModuleUpdated += GraphicsModuleUpdatedHK;
 			On.Player.checkInput += checkInputHK;
+			On.PlayerGraphics.PlayerBlink += PlayerBlinkHK;
 
 			// Manual hook to override the `Player.RevealMap` property getter.
 			new Hook(
@@ -133,6 +134,22 @@ namespace SingleplayerCoopEmotes
 			}
 			orig(self);
 			ModManager.CoopAvailable = false;
+		}
+
+		// Called by `PlayerGraphics.Update()` when the player has fully curled up to sleep.
+		//
+		// This override is the same as the original except without the Spearmaster check, as it made them inconsistent with
+		// the other slugcats, and it didn't seem like it was actually used for anything.
+		private static void PlayerBlinkHK(On.PlayerGraphics.orig_PlayerBlink orig, PlayerGraphics self)
+		{
+			if (UnityEngine.Random.value < 0.033333335f)
+			{
+				self.blink = Math.Max(2, self.blink);
+			}
+			if (self.player.sleepCurlUp == 1f)
+			{
+				self.blink = Math.Max(2, self.blink);
+			}
 		}
 
 
