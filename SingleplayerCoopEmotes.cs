@@ -92,7 +92,7 @@ namespace SingleplayerCoopEmotes
 			orig(self);
 			if (self.jollyButtonDown && self.PointDir() == Vector2.zero)
 			{
-				(self.graphicsModule as PlayerGraphics).LookAtPoint(self.mainBodyChunk.pos, 10f);
+				(self.graphicsModule as PlayerGraphics)?.LookAtPoint(self.mainBodyChunk.pos, 10f);
 			}
 		}
 
@@ -104,7 +104,7 @@ namespace SingleplayerCoopEmotes
 			orig(self, actuallyViewed, eu);
 
 			// Recreation of the checks that need to pass in the base method to point a spear, but with the `ModManager.CoopAvailable` check removed.
-			for (int i = 0; i < self.grasps.Length; i++)
+			for (int i = 0; i < 2; i++)
 			{
 				if (self.grasps[i] == null || !actuallyViewed || !self.jollyButtonDown || self.handPointing != i)
 				{
