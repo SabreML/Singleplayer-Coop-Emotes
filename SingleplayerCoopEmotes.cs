@@ -1,8 +1,9 @@
 ﻿using BepInEx;
-using System.Reflection;
-using System.Security.Permissions;
+using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using System;
+using System.Reflection;
+using System.Security.Permissions;
 using UnityEngine;
 
 #pragma warning disable CS0618
@@ -11,7 +12,7 @@ using UnityEngine;
 
 namespace SingleplayerCoopEmotes
 {
-	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.1.3")]
+	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.1.4")]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
 		public void OnEnable()
@@ -39,8 +40,10 @@ namespace SingleplayerCoopEmotes
 			On.Player.JollyUpdate += JollyUpdateHK;
 			On.Player.JollyPointUpdate += JollyPointUpdateHK;
 			On.Player.GraphicsModuleUpdated += GraphicsModuleUpdatedHK;
-			On.Player.checkInput += checkInputHK;
 			On.PlayerGraphics.PlayerBlink += PlayerBlinkHK;
+
+			// IL hook to remove all `ModManager.CoopAvailable` checks.
+			IL.Player.checkInput += checkInputHK_IL;
 
 			// Manual hook to override the `Player.RevealMap` property getter.
 			new Hook(
@@ -125,16 +128,23 @@ namespace SingleplayerCoopEmotes
 
 		// When Jolly Co-op is active and the jolly button is held, the `checkInput()` method skips opening the map
 		// and sets the player's movement input as the pointing direction.
-		private static void checkInputHK(On.Player.orig_checkInput orig, Player self)
+		private static void checkInputHK_IL(ILContext il)
 		{
-			// Temporarily make the method think that Jolly Co-op is loaded so that it checks for `jollyButtonDown`.
-			if (!self.isNPC)
+			ILCursor cursor = new ILCursor(il);
+
+			// Go to each `ModManager.CoopAvailable` check, and set its label target to the next instruction.
+			//
+			// (This results in the same behaviour as just removing the check, but after multiple days of trying I couldn't get that to work.)
+			ILLabel label = null;
+			while (cursor.TryGotoNext(MoveType.After,
+				i => i.MatchLdsfld<ModManager>("CoopAvailable"),
+				i => i.MatchBrfalse(out label)
+			))
 			{
-				ModManager.CoopAvailable = true; // Don't do this for NPCs because it can break their AI.
+				cursor.MarkLabel(label);
 			}
-			orig(self);
-			ModManager.CoopAvailable = false;
 		}
+
 
 		// Called by `PlayerGraphics.Update()` when the player has fully curled up to sleep.
 		//
