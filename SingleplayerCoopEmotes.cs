@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace SingleplayerCoopEmotes
 {
-	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.1.5")]
+	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.1.6")]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
 		public void OnEnable()
@@ -59,7 +59,7 @@ namespace SingleplayerCoopEmotes
 		{
 			// If this is hooked then the checks above must have passed, so we don't need to worry about it trying to emote twice.
 			orig(self, eu);
-			if (self.isNPC || self.room == null)
+			if (self.isNPC || self.room == null || self.abstractCreature.world.game.wasAnArtificerDream)
 			{
 				return;
 			}
