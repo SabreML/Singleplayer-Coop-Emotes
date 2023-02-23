@@ -34,7 +34,7 @@
     <RunPostBuildEvent>Always</RunPostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="SingleplayerCoopEmotes.cs" />
+    <Compile Include="src\SingleplayerCoopEmotes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
