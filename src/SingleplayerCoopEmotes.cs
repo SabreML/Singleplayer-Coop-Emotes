@@ -12,11 +12,17 @@ using UnityEngine;
 
 namespace SingleplayerCoopEmotes
 {
-	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.1.6")]
+	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.2.0")]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
+		// The current mod version.
+		public static string Version;
+
 		public void OnEnable()
 		{
+			// Take the version number that was given to `BepInPlugin()` above.
+			Version = Info.Metadata.Version.ToString();
+
 			On.RainWorld.OnModsInit += Init;
 		}
 
@@ -52,6 +58,9 @@ namespace SingleplayerCoopEmotes
 				typeof(Player).GetProperty("RevealMap", BindingFlags.Public | BindingFlags.Instance).GetGetMethod(),
 				new ILContext.Manipulator(RemoveCoopAvailableChecks)
 			);
+
+			// Set up the remix menu.
+			MachineConnector.SetRegisteredOI(Info.Metadata.GUID, new SPCoopEmotesConfig());
 		}
 
 
@@ -67,24 +76,52 @@ namespace SingleplayerCoopEmotes
 			// Sleeping emote things.
 			self.JollyEmoteUpdate();
 
-			// Update the jolly button. (Taken from `JollyInputUpdate()`)
-			if (!self.input[0].mp) // If the button isn't being held down at all.
+			// Update the jolly button.
+			UpdateJollyButton(self);
+
+			// Pointing emote things.
+			self.JollyPointUpdate();
+		}
+
+
+		// Updates `self.jollyButtonDown` based on the player's pointing keybind.
+		// If the player is using the default keybind (the map button), this copies the standard Jolly Co-op behaviour of a double-tap and hold.
+		// If not, then this just checks if the key is currently being held.
+		//
+		// (Taken mostly from the 'Jolly Rebind' mod.)
+		// (It's a lot simpler and easier to just copy some of the functionality over to this than to try and make them compatible.)
+		private void UpdateJollyButton(Player self)
+		{
+			Options.ControlSetup playerControls = RWCustom.Custom.rainWorld.options.controls[self.playerState.playerNumber];
+
+			// The map key.
+			KeyCode defaultKeybind = self.input[0].gamePad ? playerControls.GamePadMap : playerControls.KeyboardMap;
+			// The key which is set in the remix menu. (By default, the map key.)
+			KeyCode playerKeybind = SPCoopEmotesConfig.PointInput.Value;
+
+			// If the player is using the default keybind, use the standard Jolly Co-op double-tap behaviour.
+			if (playerKeybind == defaultKeybind)
 			{
-				self.jollyButtonDown = false;
-			}
-			else if (!self.input[1].mp) // If the button was down this frame, but not last frame.
-			{
-				self.jollyButtonDown = false;
-				for (int i = 2; i < self.input.Length - 1; i++)
+				if (!self.input[0].mp) // If the button isn't being held down at all.
 				{
-					if (self.input[i].mp && !self.input[i + 1].mp) // Look for a double tap.
+					self.jollyButtonDown = false;
+				}
+				else if (!self.input[1].mp) // If the button was down this frame, but not last frame.
+				{
+					self.jollyButtonDown = false;
+					for (int i = 2; i < self.input.Length - 1; i++)
 					{
-						self.jollyButtonDown = true;
+						if (self.input[i].mp && !self.input[i + 1].mp) // Look for a double tap.
+						{
+							self.jollyButtonDown = true;
+						}
 					}
 				}
 			}
-			// Pointing emote things.
-			self.JollyPointUpdate();
+			else
+			{
+				self.jollyButtonDown = Input.GetKey(playerKeybind);
+			}
 		}
 
 
