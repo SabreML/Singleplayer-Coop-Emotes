@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace SingleplayerCoopEmotes
 {
-	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.2.0")]
+	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.2.1")]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
 		// The current mod version.
@@ -87,20 +87,13 @@ namespace SingleplayerCoopEmotes
 		// Updates `self.jollyButtonDown` based on the player's pointing keybind.
 		// If the player is using the default keybind (the map button), this copies the standard Jolly Co-op behaviour of a double-tap and hold.
 		// If not, then this just checks if the key is currently being held.
-		//
-		// (Taken mostly from the 'Jolly Rebind' mod.)
-		// (It's a lot simpler and easier to just copy some of the functionality over to this than to try and make them compatible.)
 		private void UpdateJollyButton(Player self)
 		{
-			Options.ControlSetup playerControls = RWCustom.Custom.rainWorld.options.controls[self.playerState.playerNumber];
+			// The key which is set in the remix menu.
+			KeyCode customKeybind = SPCoopEmotesConfig.PointInput.Value;
 
-			// The map key.
-			KeyCode defaultKeybind = self.input[0].gamePad ? playerControls.GamePadMap : playerControls.KeyboardMap;
-			// The key which is set in the remix menu. (By default, the map key.)
-			KeyCode playerKeybind = SPCoopEmotesConfig.PointInput.Value;
-
-			// If the player is using the default keybind, use the standard Jolly Co-op double-tap behaviour.
-			if (playerKeybind == defaultKeybind)
+			// If the player's keybind is the same as the map key, continue on to the standard double tap behaviour.
+			if (KeybindIsMapKey(customKeybind))
 			{
 				if (!self.input[0].mp) // If the button isn't being held down at all.
 				{
@@ -118,10 +111,22 @@ namespace SingleplayerCoopEmotes
 					}
 				}
 			}
+			// Otherwise check for their custom keybind.
 			else
 			{
-				self.jollyButtonDown = Input.GetKey(playerKeybind);
+				self.jollyButtonDown = Input.GetKey(customKeybind);
 			}
+		}
+
+
+		// Checks if `keybindToCheck` is the same as the player's map keybind.
+		public static bool KeybindIsMapKey(KeyCode keybindToCheck)
+		{
+			// The player's Rain World keybinds. (Always player 0 since it's a singleplayer mod)
+			Options.ControlSetup playerControls = RWCustom.Custom.rainWorld.options.controls[0];
+
+			// If the keybind is the same as the keyboard or controller map key.
+			return keybindToCheck == playerControls.KeyboardMap || keybindToCheck == playerControls.GamePadMap;
 		}
 
 

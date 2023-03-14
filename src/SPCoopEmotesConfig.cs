@@ -41,23 +41,29 @@ namespace SingleplayerCoopEmotes
 		// If the player is using the default map key then a double tap is required to start pointing, so this changes to reflect that.
 		public override void Update()
 		{
-			string newText;
+			string newLabelText;
 
-			// Default keybind.
-			if (keyBinder.value == PointInput.defaultValue)
+			if (!System.Enum.TryParse(keyBinder.value, out KeyCode currentKeybind))
 			{
-				newText = "Double tap and hold the Point button with a movement input to start pointing in a direction.";
+				// This shouldn't ever happen since it can only store `KeyCode`s.
+				return;
 			}
-			// Custom keybind.
+
+			// Using the map button. (Default behaviour)
+			if (SingleplayerCoopEmotes.KeybindIsMapKey(currentKeybind))
+			{
+				newLabelText = "Double tap and hold the Point button with a movement input to start pointing in a direction.";
+			}
+			// Using a custom keybind.
 			else
 			{
-				newText = "Press and hold the Point button with a movement input to start pointing in a direction.";
+				newLabelText = "Press and hold the Point button with a movement input to start pointing in a direction.";
 			}
 
 			// Only go through the effort of updating it if the text has actually changed.
-			if (pointingLabel.text != newText)
+			if (pointingLabel.text != newLabelText)
 			{
-				pointingLabel.text = newText;
+				pointingLabel.text = newLabelText;
 			}
 		}
 
