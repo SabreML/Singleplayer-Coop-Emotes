@@ -2,6 +2,7 @@
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Security.Permissions;
 using UnityEngine;
@@ -18,13 +19,17 @@ namespace SingleplayerCoopEmotes
 		// The current mod version.
 		public static string Version;
 
+		private static bool aimAnywhereEnabled = false;
+
 		public void OnEnable()
 		{
 			// Take the version number that was given to `BepInPlugin()` above.
 			Version = Info.Metadata.Version.ToString();
 
 			On.RainWorld.OnModsInit += Init;
+			On.RainWorld.PostModsInit += PostInit;
 		}
+
 
 		private void Init(On.RainWorld.orig_OnModsInit orig, RainWorld self)
 		{
@@ -61,6 +66,16 @@ namespace SingleplayerCoopEmotes
 
 			// Set up the remix menu.
 			MachineConnector.SetRegisteredOI(Info.Metadata.GUID, new SPCoopEmotesConfig());
+		}
+
+
+		private void PostInit(On.RainWorld.orig_PostModsInit orig, RainWorld self)
+		{
+			orig(self);
+			if (ModManager.ActiveMods.Any(mod => mod.id == "demo.aimanywhere"))
+			{
+				aimAnywhereEnabled = true;
+			}
 		}
 
 
@@ -115,6 +130,11 @@ namespace SingleplayerCoopEmotes
 			else
 			{
 				self.jollyButtonDown = Input.GetKey(customKeybind);
+			}
+
+			if (aimAnywhereEnabled)
+			{
+				AimAnywhereSupport.UpdatePointDirection(self);
 			}
 		}
 

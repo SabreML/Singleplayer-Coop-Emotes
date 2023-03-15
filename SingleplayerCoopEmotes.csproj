@@ -34,6 +34,7 @@
     <RunPostBuildEvent>Always</RunPostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="src\Mod Support\AimAnywhereSupport.cs" />
     <Compile Include="src\SingleplayerCoopEmotes.cs" />
     <Compile Include="src\SPCoopEmotesConfig.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
