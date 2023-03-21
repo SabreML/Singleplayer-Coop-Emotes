@@ -34,9 +34,11 @@ namespace SingleplayerCoopEmotes
 			AddTitle();
 			AddDivider(540f);
 			AddControlsText();
-			AddKeyBinder();
+			//AddKeyBinder();
 		}
 
+		// Temporarily disabled until the next update because the new input system seems to have some issues.
+		/*
 		// Updates the text for the pointing instructions based on the current value in `keyBinder`.
 		// If the player is using the default map key then a double tap is required to start pointing, so this changes to reflect that.
 		public override void Update()
@@ -66,6 +68,7 @@ namespace SingleplayerCoopEmotes
 				pointingLabel.text = newLabelText;
 			}
 		}
+		*/
 
 		// Combines two flipped 'LinearGradient200's together to make a fancy looking divider.
 		private void AddDivider(float y)
@@ -104,7 +107,8 @@ namespace SingleplayerCoopEmotes
 			OpLabel titleLabel = new OpLabel(new Vector2(150f, 480f), new Vector2(300f, 30f), "Controls:", bigText: true);
 
 			// The text for this is added in `Update()`.
-			pointingLabel = new OpLabel(new Vector2(150f, titleLabel.pos.y - 25f), new Vector2(300f, 30f));
+			//pointingLabel = new OpLabel(new Vector2(150f, titleLabel.pos.y - 25f), new Vector2(300f, 30f));
+			pointingLabel = new OpLabel(new Vector2(150f, titleLabel.pos.y - 25f), new Vector2(300f, 30f), "Double tap and hold the Point button with a movement input to start pointing in a direction.");
 
 			OpLabel sleepingLabel = new OpLabel(new Vector2(150f, titleLabel.pos.y - 45f), new Vector2(300f, 30f), "Hold Down while crawling to curl up into a ball and sleep.");
 

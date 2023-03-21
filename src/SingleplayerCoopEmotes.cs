@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace SingleplayerCoopEmotes
 {
-	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.2.1")]
+	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.2.1.1")]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
 		// The current mod version.
@@ -94,11 +94,37 @@ namespace SingleplayerCoopEmotes
 			// Update the jolly button.
 			UpdateJollyButton(self);
 
+			// If the 'Aim Anywhere' mod is enabled, point in the direction of the mouse cursor.
+			if (aimAnywhereEnabled)
+			{
+				AimAnywhereSupport.UpdatePointDirection(self);
+			}
+
 			// Pointing emote things.
 			self.JollyPointUpdate();
 		}
 
+		private void UpdateJollyButton(Player self)
+		{
+			if (!self.input[0].mp) // If the button isn't being held down at all.
+			{
+				self.jollyButtonDown = false;
+			}
+			else if (!self.input[1].mp) // If the button was down this frame, but not last frame.
+			{
+				self.jollyButtonDown = false;
+				for (int i = 2; i < self.input.Length - 1; i++)
+				{
+					if (self.input[i].mp && !self.input[i + 1].mp) // Look for a double tap.
+					{
+						self.jollyButtonDown = true;
+					}
+				}
+			}
+		}
 
+		// Temporarily disabled until the next update because the new input system seems to have some issues.
+		/*
 		// Updates `self.jollyButtonDown` based on the player's pointing keybind.
 		// If the player is using the default keybind (the map button), this copies the standard Jolly Co-op behaviour of a double-tap and hold.
 		// If not, then this just checks if the key is currently being held.
@@ -131,11 +157,6 @@ namespace SingleplayerCoopEmotes
 			{
 				self.jollyButtonDown = Input.GetKey(customKeybind);
 			}
-
-			if (aimAnywhereEnabled)
-			{
-				AimAnywhereSupport.UpdatePointDirection(self);
-			}
 		}
 
 
@@ -148,7 +169,7 @@ namespace SingleplayerCoopEmotes
 			// If the keybind is the same as the keyboard or controller map key.
 			return keybindToCheck == playerControls.KeyboardMap || keybindToCheck == playerControls.GamePadMap;
 		}
-
+		*/
 
 		// Restores the (most likely unintentional) functionality from the 1.5 version of
 		// pointing with no movement input making your slugcat face towards the screen.
