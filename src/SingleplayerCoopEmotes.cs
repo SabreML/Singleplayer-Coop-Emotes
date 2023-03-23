@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace SingleplayerCoopEmotes
 {
-	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.2.1.1")]
+	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.3.0")]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
 		// The current mod version.
@@ -104,37 +104,16 @@ namespace SingleplayerCoopEmotes
 			self.JollyPointUpdate();
 		}
 
-		private void UpdateJollyButton(Player self)
-		{
-			if (!self.input[0].mp) // If the button isn't being held down at all.
-			{
-				self.jollyButtonDown = false;
-			}
-			else if (!self.input[1].mp) // If the button was down this frame, but not last frame.
-			{
-				self.jollyButtonDown = false;
-				for (int i = 2; i < self.input.Length - 1; i++)
-				{
-					if (self.input[i].mp && !self.input[i + 1].mp) // Look for a double tap.
-					{
-						self.jollyButtonDown = true;
-					}
-				}
-			}
-		}
-
-		// Temporarily disabled until the next update because the new input system seems to have some issues.
-		/*
 		// Updates `self.jollyButtonDown` based on the player's pointing keybind.
-		// If the player is using the default keybind (the map button), this copies the standard Jolly Co-op behaviour of a double-tap and hold.
-		// If not, then this just checks if the key is currently being held.
+		// If the player isn't using a custom keybind, this copies the standard Jolly Co-op behaviour of a double-tap and hold.
+		// If not, then this checks if the custom key is currently being held.
 		private void UpdateJollyButton(Player self)
 		{
 			// The key which is set in the remix menu.
-			KeyCode customKeybind = SPCoopEmotesConfig.PointInput.Value;
+			KeyCode customKeybind = SPCoopEmotesConfig.PointKeybind.Value;
 
-			// If the player's keybind is the same as the map key, continue on to the standard double tap behaviour.
-			if (KeybindIsMapKey(customKeybind))
+			// If the player isn't using a custom keybind, continue on to the standard double tap map key behaviour.
+			if (customKeybind == KeyCode.None)
 			{
 				if (!self.input[0].mp) // If the button isn't being held down at all.
 				{
@@ -152,27 +131,15 @@ namespace SingleplayerCoopEmotes
 					}
 				}
 			}
-			// Otherwise check for their custom keybind.
+			// Otherwise check for their keybind.
 			else
 			{
 				self.jollyButtonDown = Input.GetKey(customKeybind);
 			}
 		}
 
-
-		// Checks if `keybindToCheck` is the same as the player's map keybind.
-		public static bool KeybindIsMapKey(KeyCode keybindToCheck)
-		{
-			// The player's Rain World keybinds. (Always player 0 since it's a singleplayer mod)
-			Options.ControlSetup playerControls = RWCustom.Custom.rainWorld.options.controls[0];
-
-			// If the keybind is the same as the keyboard or controller map key.
-			return keybindToCheck == playerControls.KeyboardMap || keybindToCheck == playerControls.GamePadMap;
-		}
-		*/
-
-		// Restores the (most likely unintentional) functionality from the 1.5 version of
-		// pointing with no movement input making your slugcat face towards the screen.
+		// Restores the (most likely unintentional) functionality from the 1.5 version of the mod,
+		// of pointing with no movement input making your slugcat face towards the screen.
 		// (Technically, making them face towards the hand rendered behind their body.)
 		//
 		// Added by request :)
