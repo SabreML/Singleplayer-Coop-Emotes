@@ -15,7 +15,7 @@ namespace SingleplayerCoopEmotes
 
 		public SPCoopEmotesConfig()
 		{
-			PointKeybind = config.Bind("PointKeybind", KeyCode.None, new ConfigurableInfo("Input a button to change the pointing keybind. (Input the 'Escape' key to unbind)", tags: new object[]
+			PointKeybind = config.Bind("PointKeybind", KeyCode.None, new ConfigurableInfo("Input a button to change the pointing keybind. (Input the 'Escape' key to reset to default)", tags: new object[]
 			{
 				"Custom pointing keybind"
 			}));
@@ -78,7 +78,7 @@ namespace SingleplayerCoopEmotes
 			// The text for this is added in `Update()`.
 			pointingLabel = new OpLabel(new Vector2(150f, titleLabel.pos.y - 25f), new Vector2(300f, 30f));
 
-			OpLabel sleepingLabel = new OpLabel(new Vector2(150f, pointingLabel.pos.y - 20f), new Vector2(300f, 30f), "Hold Down while crawling to curl up into a ball and sleep.");
+			OpLabel sleepingLabel = new OpLabel(new Vector2(150f, pointingLabel.pos.y - 20f), new Vector2(300f, 30f), "Hold Down while crawling to curl up into a ball and sleep!");
 
 			Tabs[0].AddItems(new UIelement[]
 			{

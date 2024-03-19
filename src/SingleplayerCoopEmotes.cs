@@ -13,13 +13,19 @@ using UnityEngine;
 
 namespace SingleplayerCoopEmotes
 {
-	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.3.0")]
+	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.3.1")]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
-		// The current mod version.
+		/// <summary>
+		/// The current mod version.
+		/// </summary>
 		public static string Version;
 
+		/// <summary>
+		/// Bool indicating if the 'Aim Anywhere' mod is enabled.
+		/// </summary>
 		private static bool aimAnywhereEnabled = false;
+
 
 		public void OnEnable()
 		{
@@ -34,27 +40,31 @@ namespace SingleplayerCoopEmotes
 		private void Init(On.RainWorld.orig_OnModsInit orig, RainWorld self)
 		{
 			orig(self);
+
+			string errorText = null;
 			if (self.dlcVersion < 1)
 			{
-				Debug.Log("(SPCoopEmotes) Error: DLC not detected!");
-				Logger.LogError("DLC not detected!");
-				return;
+				errorText = "DLC not detected";
 			}
-			if (ModManager.JollyCoop)
+			else if (ModManager.JollyCoop)
 			{
-				Debug.Log("(SPCoopEmotes) Error: Jolly Co-op is enabled!");
-				Logger.LogError("Jolly Co-op is enabled!");
-				return;
+				errorText = "Jolly Co-op is enabled";
 			}
 
-			// Only load the hooks if the DLC is installed on Steam and Jolly Co-op isn't currently loaded. (No reason to change anything otherwise)
+			// Only go beyond here if the DLC is installed and Jolly Co-op isn't currently loaded. (No reason to change anything otherwise)
+			if (errorText != null)
+			{
+				Debug.Log($"(SPCoopEmotes) Error: {errorText}. Skipping hooks!");
+				Logger.LogError(errorText);
+				return;
+			}
 
 			// Regular hooks.
 			On.Player.JollyUpdate += JollyUpdateHK;
 			On.Player.JollyPointUpdate += JollyPointUpdateHK;
 			On.PlayerGraphics.PlayerBlink += PlayerBlinkHK;
 
-			// IL hooks to remove all `ModManager.CoopAvailable` checks.
+			// IL hooks to remove all `ModManager.CoopAvailable` checks for emotes.
 			IL.Player.checkInput += RemoveCoopAvailableChecks;
 			IL.Player.GraphicsModuleUpdated += RemoveCoopAvailableChecks;
 
@@ -104,6 +114,7 @@ namespace SingleplayerCoopEmotes
 			self.JollyPointUpdate();
 		}
 
+
 		// Updates `self.jollyButtonDown` based on the player's pointing keybind.
 		// If the player isn't using a custom keybind, this copies the standard Jolly Co-op behaviour of a double-tap and hold.
 		// If not, then this checks if the custom key is currently being held.
@@ -138,6 +149,7 @@ namespace SingleplayerCoopEmotes
 			}
 		}
 
+
 		// Restores the (most likely unintentional) functionality from the 1.5 version of the mod,
 		// of pointing with no movement input making your slugcat face towards the screen.
 		// (Technically, making them face towards the hand rendered behind their body.)
@@ -155,8 +167,9 @@ namespace SingleplayerCoopEmotes
 
 		// Called by `PlayerGraphics.Update()` when the player has fully curled up to sleep.
 		//
-		// This override is the same as the original except without the Spearmaster check, as it made them inconsistent with
-		// the other slugcats, and it didn't seem like it was actually used for anything.
+		// This override is the same as the original except with the Spearmaster check removed,
+		// as it made them inconsistent with the other slugcats and it didn't seem like it was actually used for anything.
+		// (This is for the sleeping animation)
 		private void PlayerBlinkHK(On.PlayerGraphics.orig_PlayerBlink orig, PlayerGraphics self)
 		{
 			if (UnityEngine.Random.value < 0.033333335f)
@@ -171,7 +184,7 @@ namespace SingleplayerCoopEmotes
 
 
 		// This is used to go to each `ModManager.CoopAvailable` check in the method and set its `brfalse` target to the next instruction.
-		// (This has the same result as just removing the check, but for some reason I can't get that to work.)
+		// (This has the same result as just removing the check.)
 		private void RemoveCoopAvailableChecks(ILContext il)
 		{
 			ILCursor cursor = new ILCursor(il);
@@ -183,7 +196,7 @@ namespace SingleplayerCoopEmotes
 				i => i.MatchBrfalse(out label) // Assign the `ILLabel` from this instruction to the `label` variable.
 			))
 			{
-				// Set `label`'s target to `cursor.Next`.
+				// Set `label`'s target to `cursor.Next`, making the `brfalse` just jump to the next line.
 				cursor.MarkLabel(label);
 				editSuccessful = true;
 			}
