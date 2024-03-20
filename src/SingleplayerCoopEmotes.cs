@@ -91,9 +91,8 @@ namespace SingleplayerCoopEmotes
 
 		private void JollyUpdateHK(On.Player.orig_JollyUpdate orig, Player self, bool eu)
 		{
-			// If this is hooked then the checks above must have passed, so we don't need to worry about it trying to emote twice.
 			orig(self, eu);
-			if (self.isNPC || self.room == null || self.abstractCreature.world.game.wasAnArtificerDream)
+			if (self.isNPC || self.room == null || self.DreamState)
 			{
 				return;
 			}
@@ -123,29 +122,28 @@ namespace SingleplayerCoopEmotes
 			// The key which is set in the remix menu.
 			KeyCode customKeybind = SPCoopEmotesConfig.PointKeybind.Value;
 
-			// If the player isn't using a custom keybind, continue on to the standard double tap map key behaviour.
-			if (customKeybind == KeyCode.None)
-			{
-				if (!self.input[0].mp) // If the button isn't being held down at all.
-				{
-					self.jollyButtonDown = false;
-				}
-				else if (!self.input[1].mp) // If the button was down this frame, but not last frame.
-				{
-					self.jollyButtonDown = false;
-					for (int i = 2; i < self.input.Length - 1; i++)
-					{
-						if (self.input[i].mp && !self.input[i + 1].mp) // Look for a double tap.
-						{
-							self.jollyButtonDown = true;
-						}
-					}
-				}
-			}
-			// Otherwise check for their keybind.
-			else
+			// If the player is using a custom keybind.
+			if (customKeybind != KeyCode.None)
 			{
 				self.jollyButtonDown = Input.GetKey(customKeybind);
+				return;
+			}
+
+			// If the player isn't using a custom keybind, continue on to the standard double tap map key behaviour.
+			if (!self.input[0].mp) // If the button isn't being held down at all.
+			{
+				self.jollyButtonDown = false;
+			}
+			else if (!self.input[1].mp) // If the button was down this frame, but not last frame.
+			{
+				self.jollyButtonDown = false;
+				for (int i = 2; i < self.input.Length - 1; i++)
+				{
+					if (self.input[i].mp && !self.input[i + 1].mp) // Look for a double tap.
+					{
+						self.jollyButtonDown = true;
+					}
+				}
 			}
 		}
 
