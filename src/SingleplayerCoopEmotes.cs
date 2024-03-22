@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace SingleplayerCoopEmotes
 {
-	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.3.1")]
+	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.4")]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
 		/// <summary>
@@ -22,9 +22,14 @@ namespace SingleplayerCoopEmotes
 		public static string Version;
 
 		/// <summary>
+		/// The error state from the mod's initialisation.
+		/// </summary>
+		public static Error InitError;
+
+		/// <summary>
 		/// Bool indicating if the 'Aim Anywhere' mod is enabled.
 		/// </summary>
-		private static bool aimAnywhereEnabled = false;
+		private static bool aimAnywhereEnabled;
 
 
 		public void OnEnable()
@@ -32,31 +37,35 @@ namespace SingleplayerCoopEmotes
 			// Take the version number that was given to `BepInPlugin()` above.
 			Version = Info.Metadata.Version.ToString();
 
+			On.RainWorld.PreModsInit += PreInit;
 			On.RainWorld.OnModsInit += Init;
 			On.RainWorld.PostModsInit += PostInit;
 		}
 
+		private void PreInit(On.RainWorld.orig_PreModsInit orig, RainWorld self)
+		{
+			orig(self);
+			// This is preemptively set to 'UnknownError' just in case anything goes wrong.
+			InitError = Error.UnknownError;
+
+			if (self.dlcVersion != 1)
+			{
+				// Throw an exception so that this mod gets automatically disabled.
+				throw new Exception("The Downpour expansion is required!");
+			}
+		}
 
 		private void Init(On.RainWorld.orig_OnModsInit orig, RainWorld self)
 		{
 			orig(self);
 
-			string errorText = null;
-			if (self.dlcVersion < 1)
-			{
-				errorText = "DLC not detected";
-			}
-			else if (ModManager.JollyCoop)
-			{
-				errorText = "Jolly Co-op is enabled";
-			}
+			// Before anything else, set up the remix menu.
+			MachineConnector.SetRegisteredOI(Info.Metadata.GUID, new SPCoopEmotesConfig());
 
-			// Only go beyond here if the DLC is installed and Jolly Co-op isn't currently loaded. (No reason to change anything otherwise)
-			if (errorText != null)
+			// If Jolly Co-op is enabled, then this mod will conflict with it.
+			if (ModManager.JollyCoop)
 			{
-				Debug.Log($"(SPCoopEmotes) Error: {errorText}. Skipping hooks!");
-				Logger.LogError(errorText);
-				return;
+				InitError = Error.CoopEnabled;
 			}
 
 			// Regular hooks.
@@ -73,11 +82,7 @@ namespace SingleplayerCoopEmotes
 				typeof(Player).GetProperty("RevealMap", BindingFlags.Public | BindingFlags.Instance).GetGetMethod(),
 				new ILContext.Manipulator(RemoveCoopAvailableChecks)
 			);
-
-			// Set up the remix menu.
-			MachineConnector.SetRegisteredOI(Info.Metadata.GUID, new SPCoopEmotesConfig());
 		}
-
 
 		private void PostInit(On.RainWorld.orig_PostModsInit orig, RainWorld self)
 		{
@@ -86,12 +91,29 @@ namespace SingleplayerCoopEmotes
 			{
 				aimAnywhereEnabled = true;
 			}
+
+			// If a different error came up.
+			if (InitError.ErrorType != Error.Type.UnknownError)
+			{
+				Debug.Log($"(SPCoopEmotes) Error: Mod init failed with error type '{InitError.ErrorType}'.");
+				Logger.LogError($"Mod init failed with error type '{InitError.ErrorType}'.");
+				return;
+			}
+
+			InitError = Error.None;
+			Debug.Log("(SPCoopEmotes) Mod initialised successfully!");
+			Logger.LogMessage("Mod initialised successfully!");
 		}
 
 
 		private void JollyUpdateHK(On.Player.orig_JollyUpdate orig, Player self, bool eu)
 		{
 			orig(self, eu);
+			if (InitError.Exists)
+			{
+				return;
+			}
+
 			if (self.isNPC || self.room == null || self.DreamState)
 			{
 				return;
@@ -156,6 +178,11 @@ namespace SingleplayerCoopEmotes
 		private void JollyPointUpdateHK(On.Player.orig_JollyPointUpdate orig, Player self)
 		{
 			orig(self);
+			if (InitError.Exists)
+			{
+				return;
+			}
+
 			if (self.jollyButtonDown && self.PointDir() == Vector2.zero)
 			{
 				(self.graphicsModule as PlayerGraphics)?.LookAtPoint(self.mainBodyChunk.pos, 10f);
@@ -170,6 +197,12 @@ namespace SingleplayerCoopEmotes
 		// (This is for the sleeping animation)
 		private void PlayerBlinkHK(On.PlayerGraphics.orig_PlayerBlink orig, PlayerGraphics self)
 		{
+			if (InitError.Exists)
+			{
+				orig(self);
+				return;
+			}
+
 			if (UnityEngine.Random.value < 0.033333335f)
 			{
 				self.blink = Math.Max(2, self.blink);
@@ -181,8 +214,8 @@ namespace SingleplayerCoopEmotes
 		}
 
 
-		// This is used to go to each `ModManager.CoopAvailable` check in the method and set its `brfalse` target to the next instruction.
-		// (This has the same result as just removing the check.)
+		// This is used to go to each `ModManager.CoopAvailable` check in the method and set its `brfalse` target to the next instruction,
+		// which has the same result as just removing the check.
 		private void RemoveCoopAvailableChecks(ILContext il)
 		{
 			ILCursor cursor = new ILCursor(il);

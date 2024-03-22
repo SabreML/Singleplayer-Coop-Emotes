@@ -10,6 +10,7 @@
     <RootNamespace>SingleplayerCoopEmotes</RootNamespace>
     <AssemblyName>SingleplayerCoopEmotes</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <LangVersion>11</LangVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
@@ -34,6 +35,7 @@
     <RunPostBuildEvent>Always</RunPostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="src\Error.cs" />
     <Compile Include="src\Mod Support\AimAnywhereSupport.cs" />
     <Compile Include="src\SingleplayerCoopEmotes.cs" />
     <Compile Include="src\SPCoopEmotesConfig.cs" />
