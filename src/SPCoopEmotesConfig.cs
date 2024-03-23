@@ -36,7 +36,34 @@ namespace SingleplayerCoopEmotes
 			AddControlsText();
 			AddKeyBinder();
 
-			UpdateControlsText();
+			if (SingleplayerCoopEmotes.InitError.Exists)
+			{
+				AddErrorMessage();
+			}
+		}
+
+		// Updates the text for the pointing instructions based on the current value in `keyBinder`.
+		// If the player is using the default map key then a double tap is required to start pointing, so this changes to reflect that.
+		public override void Update()
+		{
+			string newLabelText;
+
+			// Using the map button. (Default behaviour)
+			if (keyBinder.value == OpKeyBinder.NONE)
+			{
+				newLabelText = "Double tap and hold the Map button with a movement input to start pointing in a direction.";
+			}
+			// Using a custom keybind.
+			else
+			{
+				newLabelText = "Press and hold the Point button with a movement input to start pointing in a direction.";
+			}
+
+			// Only go through the effort of updating it if the text has actually changed.
+			if (pointingLabel.text != newLabelText)
+			{
+				pointingLabel.text = newLabelText;
+			}
 		}
 
 		// Combines two flipped 'LinearGradient200's together to make a fancy looking divider.
@@ -76,7 +103,7 @@ namespace SingleplayerCoopEmotes
 			OpLabel titleLabel = new OpLabel(new Vector2(150f, 490f), new Vector2(300f, 30f), "Controls:", bigText: true);
 
 			// The text for this is added in `Update()`.
-			pointingLabel = new OpLabel(new Vector2(150f, titleLabel.pos.y - 25f), new Vector2(300f, 30f));
+			pointingLabel = new OpLabel(new Vector2(150f, titleLabel.pos.y - 25f), new Vector2(300f, 30f), "Error: Failed to update help text!");
 
 			OpLabel sleepingLabel = new OpLabel(new Vector2(150f, pointingLabel.pos.y - 20f), new Vector2(300f, 30f), "Hold Down while crawling to curl up into a ball and sleep!");
 
@@ -96,10 +123,10 @@ namespace SingleplayerCoopEmotes
 				description = PointKeybind.info.description
 			};
 			// Update the instructions text every time the keybind is changed.
-			keyBinder.OnChange += UpdateControlsText;
+			keyBinder.OnChange += Update;
 
 			OpLabel keyBinderLabel = new OpLabel(new Vector2(150f, keyBinder.pos.y - 25f), new Vector2(300f, 30f), PointKeybind.info.Tags[0] as string);
-			OpLabel warningLabel = new OpLabel(new Vector2(150f, keyBinderLabel.pos.y - 20), new Vector2(300f, 30f),
+			OpLabel warningLabel = new OpLabel(new Vector2(150f, keyBinderLabel.pos.y - 20f), new Vector2(300f, 30f),
 				"(Note: This must be different to the map button!)")
 			{
 				color = new Color(0.517f, 0.506f, 0.534f)
@@ -113,28 +140,44 @@ namespace SingleplayerCoopEmotes
 			});
 		}
 
-		// Updates the text for the pointing instructions based on the current value in `keyBinder`.
-		// If the player is using the default map key then a double tap is required to start pointing, so this changes to reflect that.
-		private void UpdateControlsText()
+		// Adds a boxed error message
+		private void AddErrorMessage()
 		{
-			string newLabelText;
+			Color color = new Color(0.85f, 0.35f, 0.4f);
+			Vector2 size = new Vector2(350f, 150f);
+			Vector2 position = new Vector2(125f, 150f);
 
-			// Using the map button. (Default behaviour)
-			if (keyBinder.value == OpKeyBinder.NONE)
-			{
-				newLabelText = "Double tap and hold the Map button with a movement input to start pointing in a direction.";
-			}
-			// Using a custom keybind.
-			else
-			{
-				newLabelText = "Press and hold the Point button with a movement input to start pointing in a direction.";
-			}
+			// The red box around the error message.
+			OpRect containerRect = new OpRect(position, size);
+			containerRect.colorEdge = color;
 
-			// Only go through the effort of updating it if the text has actually changed.
-			if (pointingLabel.text != newLabelText)
+			// lil' slug head
+			Vector2 scugPos = position + (size / 2) + new Vector2(0f, 19f);
+			OpImage scug = new OpImage(scugPos, "Kill_Slugcat");
+			scug.pos -= scug._size / 2; // Centre the sprite
+			scug.color = color;
+
+			// The error message
+			OpLabel textLabel = new OpLabel(
+				position,
+				size,
+				@$"
+					.
+					An error has occurred during mod initialisation!
+					Error type: {{{SingleplayerCoopEmotes.InitError.ErrorType}}}
+				", // The dot on the first line is there to shift the text down for the sprite, which covers it.
+				FLabelAlignment.Center
+			);
+			textLabel.color = color;
+			textLabel.autoWrap = true;
+			textLabel.Change();
+
+			Tabs[0].AddItems(new UIelement[]
 			{
-				pointingLabel.text = newLabelText;
-			}
+				containerRect,
+				scug,
+				textLabel
+			});
 		}
 	}
 
@@ -144,7 +187,7 @@ namespace SingleplayerCoopEmotes
 	{
 		public ResettableKeyBinder(Configurable<KeyCode> config, Vector2 pos, Vector2 size, bool collisionCheck = true,
 			BindController controllerNo = BindController.AnyController) : base(config, pos, size, collisionCheck, controllerNo)
-		{ }
+		{}
 
 		public override string value
 		{
