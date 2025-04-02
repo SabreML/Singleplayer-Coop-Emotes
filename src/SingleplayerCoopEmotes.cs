@@ -13,13 +13,13 @@ using UnityEngine;
 
 namespace SingleplayerCoopEmotes
 {
-	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", "1.4")]
+	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", VERSION)]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
 		/// <summary>
 		/// The current mod version.
 		/// </summary>
-		public static string Version;
+		public const string VERSION = "1.4.1";
 
 		/// <summary>
 		/// The error state from the mod's initialisation.
@@ -34,9 +34,6 @@ namespace SingleplayerCoopEmotes
 
 		public void OnEnable()
 		{
-			// Take the version number that was given to `BepInPlugin()` above.
-			Version = Info.Metadata.Version.ToString();
-
 			On.RainWorld.PreModsInit += PreInit;
 			On.RainWorld.OnModsInit += Init;
 			On.RainWorld.PostModsInit += PostInit;
@@ -47,12 +44,6 @@ namespace SingleplayerCoopEmotes
 			orig(self);
 			// This is preemptively set to 'UnknownError' just in case anything goes wrong.
 			InitError = Error.UnknownError;
-
-			if (self.dlcVersion != 1)
-			{
-				// Throw an exception so that this mod gets automatically disabled.
-				throw new Exception("The Downpour expansion is required!");
-			}
 		}
 
 		private void Init(On.RainWorld.orig_OnModsInit orig, RainWorld self)
@@ -75,7 +66,7 @@ namespace SingleplayerCoopEmotes
 
 			// IL hooks to remove all `ModManager.CoopAvailable` checks for emotes.
 			IL.Player.checkInput += RemoveCoopAvailableChecks;
-			IL.Player.GraphicsModuleUpdated += RemoveCoopAvailableChecks;
+			IL.Player.GraphicsModuleUpdated += RemoveCoopAvailableChecks; // todo check if this is needed
 
 			// And a manual one for the `Player.RevealMap` property getter.
 			new ILHook(
@@ -87,10 +78,7 @@ namespace SingleplayerCoopEmotes
 		private void PostInit(On.RainWorld.orig_PostModsInit orig, RainWorld self)
 		{
 			orig(self);
-			if (ModManager.ActiveMods.Any(mod => mod.id == "demo.aimanywhere"))
-			{
-				aimAnywhereEnabled = true;
-			}
+			aimAnywhereEnabled = ModManager.ActiveMods.Any(mod => mod.id == "demo.aimanywhere");
 
 			// If a different error came up.
 			if (InitError.ErrorType != Error.Type.UnknownError)
@@ -114,7 +102,7 @@ namespace SingleplayerCoopEmotes
 				return;
 			}
 
-			if (self.isNPC || self.room == null || self.DreamState)
+			if (self.isNPC || self.DreamState || self.room == null)
 			{
 				return;
 			}
@@ -138,10 +126,10 @@ namespace SingleplayerCoopEmotes
 
 		// Updates `self.jollyButtonDown` based on the player's pointing keybind.
 		// If the player isn't using a custom keybind, this copies the standard Jolly Co-op behaviour of a double-tap and hold.
-		// If not, then this checks if the custom key is currently being held.
+		// If they are using a custom keybind, then this checks if the custom key is currently being held.
 		private void UpdateJollyButton(Player self)
 		{
-			// The key which is set in the remix menu.
+			// The key which has been set in the remix menu.
 			KeyCode customKeybind = SPCoopEmotesConfig.PointKeybind.Value;
 
 			// If the player is using a custom keybind.
@@ -218,10 +206,11 @@ namespace SingleplayerCoopEmotes
 		// which has the same result as just removing the check.
 		private void RemoveCoopAvailableChecks(ILContext il)
 		{
-			ILCursor cursor = new ILCursor(il);
+			ILCursor cursor = new(il);
 			bool editSuccessful = false;
 
 			ILLabel label = null;
+			// Match a `ldsfld` for `ModManager.CoopAvailable`, followed by a `brfalse`.
 			while (cursor.TryGotoNext(MoveType.After,
 				i => i.MatchLdsfld<ModManager>("CoopAvailable"),
 				i => i.MatchBrfalse(out label) // Assign the `ILLabel` from this instruction to the `label` variable.

@@ -1,9 +1,9 @@
 {
 	"id": "sabreml.singleplayercoopemotes",
 	"name": "Singleplayer Co-op Emotes",
-	"version": "1.4",
-	"target_game_version": "v1.9.15",
+	"version": "1.4.1",
+	"target_game_version": "v1.10.1",
 	"authors": "SabreML",
 	"description": "Makes the Jolly Co-op emotes work in singleplayer!",
-	"tags": ["Game Mechanics"]
+	"tags": ["Game Mechanics", "Downpour"]
 }

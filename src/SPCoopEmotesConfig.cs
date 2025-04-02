@@ -59,7 +59,7 @@ namespace SingleplayerCoopEmotes
 				newLabelText = "Press and hold the Point button with a movement input to start pointing in a direction.";
 			}
 
-			// Only go through the effort of updating it if the text has actually changed.
+			// Only go through the effort of updating the `text` property if the text has actually changed.
 			if (pointingLabel.text != newLabelText)
 			{
 				pointingLabel.text = newLabelText;
@@ -69,11 +69,11 @@ namespace SingleplayerCoopEmotes
 		// Combines two flipped 'LinearGradient200's together to make a fancy looking divider.
 		private void AddDivider(float y)
 		{
-			OpImage dividerLeft = new OpImage(new Vector2(300f, y), "LinearGradient200");
+			OpImage dividerLeft = new(new Vector2(300f, y), "LinearGradient200");
 			dividerLeft.sprite.SetAnchor(0.5f, 0f);
 			dividerLeft.sprite.rotation = 270f;
 
-			OpImage dividerRight = new OpImage(new Vector2(300f, y), "LinearGradient200");
+			OpImage dividerRight = new(new Vector2(300f, y), "LinearGradient200");
 			dividerRight.sprite.SetAnchor(0.5f, 0f);
 			dividerRight.sprite.rotation = 90f;
 
@@ -87,8 +87,8 @@ namespace SingleplayerCoopEmotes
 		// Adds the mod name and version to the interface between two dividers.
 		private void AddTitle()
 		{
-			OpLabel title = new OpLabel(new Vector2(150f, 560f), new Vector2(300f, 30f), "Singleplayer Co-op Emotes", bigText: true);
-			OpLabel version = new OpLabel(new Vector2(150f, 540f), new Vector2(300f, 30f), $"Version {SingleplayerCoopEmotes.Version}");
+			OpLabel title = new(new Vector2(150f, 560f), new Vector2(300f, 30f), "Singleplayer Co-op Emotes", bigText: true);
+			OpLabel version = new(new Vector2(150f, 540f), new Vector2(300f, 30f), $"Version {SingleplayerCoopEmotes.VERSION}");
 
 			Tabs[0].AddItems(new UIelement[]
 			{
@@ -100,12 +100,12 @@ namespace SingleplayerCoopEmotes
 		// Adds control instructions for each emote.
 		private void AddControlsText()
 		{
-			OpLabel titleLabel = new OpLabel(new Vector2(150f, 490f), new Vector2(300f, 30f), "Controls:", bigText: true);
+			OpLabel titleLabel = new(new Vector2(150f, 490f), new Vector2(300f, 30f), "Controls:", bigText: true);
 
 			// The text for this is added in `Update()`.
 			pointingLabel = new OpLabel(new Vector2(150f, titleLabel.pos.y - 25f), new Vector2(300f, 30f), "Error: Failed to update help text!");
 
-			OpLabel sleepingLabel = new OpLabel(new Vector2(150f, pointingLabel.pos.y - 20f), new Vector2(300f, 30f), "Hold Down while crawling to curl up into a ball and sleep!");
+			OpLabel sleepingLabel = new(new Vector2(150f, pointingLabel.pos.y - 20f), new Vector2(300f, 30f), "Hold Down while crawling to curl up into a ball and sleep!");
 
 			Tabs[0].AddItems(new UIelement[]
 			{
@@ -125,9 +125,9 @@ namespace SingleplayerCoopEmotes
 			// Update the instructions text every time the keybind is changed.
 			keyBinder.OnChange += Update;
 
-			OpLabel keyBinderLabel = new OpLabel(new Vector2(150f, keyBinder.pos.y - 25f), new Vector2(300f, 30f), PointKeybind.info.Tags[0] as string);
-			OpLabel warningLabel = new OpLabel(new Vector2(150f, keyBinderLabel.pos.y - 20f), new Vector2(300f, 30f),
-				"(Note: This must be different to the map button!)")
+			OpLabel keyBinderLabel = new(new Vector2(150f, keyBinder.pos.y - 25f), new Vector2(300f, 30f), PointKeybind.info.Tags[0] as string);
+			OpLabel warningLabel = new(new Vector2(150f, keyBinderLabel.pos.y - 20f), new Vector2(300f, 30f),
+				"(Make sure this doesn't conflict with other keybinds!)")
 			{
 				color = new Color(0.517f, 0.506f, 0.534f)
 			};
@@ -143,22 +143,22 @@ namespace SingleplayerCoopEmotes
 		// Adds a boxed error message
 		private void AddErrorMessage()
 		{
-			Color color = new Color(0.85f, 0.35f, 0.4f);
-			Vector2 size = new Vector2(350f, 150f);
-			Vector2 position = new Vector2(125f, 150f);
+			Color color = new(0.85f, 0.35f, 0.4f);
+			Vector2 size = new(350f, 150f);
+			Vector2 position = new(125f, 150f);
 
 			// The red box around the error message.
-			OpRect containerRect = new OpRect(position, size);
+			OpRect containerRect = new(position, size);
 			containerRect.colorEdge = color;
 
 			// lil' slug head
 			Vector2 scugPos = position + (size / 2) + new Vector2(0f, 19f);
-			OpImage scug = new OpImage(scugPos, "Kill_Slugcat");
+			OpImage scug = new(scugPos, "Multiplayer_Death");
 			scug.pos -= scug._size / 2; // Centre the sprite
 			scug.color = color;
 
 			// The error message
-			OpLabel textLabel = new OpLabel(
+			OpLabel textLabel = new(
 				position,
 				size,
 				@$"
@@ -194,12 +194,15 @@ namespace SingleplayerCoopEmotes
 			get => base.value;
 			set
 			{
+				// If the key trying to be assigned is different from the current one.
 				if (base.value != value)
 				{
+					// If that key is Esc, reset the keybinder to empty/`NONE`.
 					if (value == "Escape")
 					{
 						value = OpKeyBinder.NONE;
 					}
+					// Otherwise just pass it to the standard `OpKeyBinder` system.
 					base.value = value;
 				}
 			}
