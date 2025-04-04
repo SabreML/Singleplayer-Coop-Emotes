@@ -36,7 +36,7 @@ namespace SingleplayerCoopEmotes
 			AddControlsText();
 			AddKeyBinder();
 
-			if (SingleplayerCoopEmotes.InitError.Exists)
+			if (SingleplayerCoopEmotes.InitError != ErrorType.None)
 			{
 				AddErrorMessage();
 			}
@@ -164,7 +164,7 @@ namespace SingleplayerCoopEmotes
 				@$"
 					.
 					An error has occurred during mod initialisation!
-					Error type: {{{SingleplayerCoopEmotes.InitError.ErrorType}}}
+					Error type:  {{{SingleplayerCoopEmotes.InitError}}}
 				", // The dot on the first line is there to shift the text down for the sprite, which covers it.
 				FLabelAlignment.Center
 			);

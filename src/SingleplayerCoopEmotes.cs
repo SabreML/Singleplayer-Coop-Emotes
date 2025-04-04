@@ -13,18 +13,28 @@ using UnityEngine;
 
 namespace SingleplayerCoopEmotes
 {
+	/// <summary>
+	/// Enum of possible mod initialisation error types.
+	/// </summary>
+	public enum ErrorType
+	{
+		None,
+		JollyCoopEnabled,
+		ILEditFailed
+	}
+
 	[BepInPlugin("sabreml.singleplayercoopemotes", "SingleplayerCoopEmotes", VERSION)]
 	public class SingleplayerCoopEmotes : BaseUnityPlugin
 	{
 		/// <summary>
 		/// The current mod version.
 		/// </summary>
-		public const string VERSION = "1.4.1";
+		public const string VERSION = "1.4.2";
 
 		/// <summary>
 		/// The error state from the mod's initialisation.
 		/// </summary>
-		public static Error InitError;
+		public static ErrorType InitError = ErrorType.None;
 
 		/// <summary>
 		/// Bool indicating if the 'Aim Anywhere' mod is enabled.
@@ -34,16 +44,8 @@ namespace SingleplayerCoopEmotes
 
 		public void OnEnable()
 		{
-			On.RainWorld.PreModsInit += PreInit;
 			On.RainWorld.OnModsInit += Init;
 			On.RainWorld.PostModsInit += PostInit;
-		}
-
-		private void PreInit(On.RainWorld.orig_PreModsInit orig, RainWorld self)
-		{
-			orig(self);
-			// This is preemptively set to 'UnknownError' just in case anything goes wrong.
-			InitError = Error.UnknownError;
 		}
 
 		private void Init(On.RainWorld.orig_OnModsInit orig, RainWorld self)
@@ -56,7 +58,7 @@ namespace SingleplayerCoopEmotes
 			// If Jolly Co-op is enabled, then this mod will conflict with it.
 			if (ModManager.JollyCoop)
 			{
-				InitError = Error.CoopEnabled;
+				InitError = ErrorType.JollyCoopEnabled;
 			}
 
 			// Regular hooks.
@@ -80,24 +82,24 @@ namespace SingleplayerCoopEmotes
 			orig(self);
 			aimAnywhereEnabled = ModManager.ActiveMods.Any(mod => mod.id == "demo.aimanywhere");
 
-			// If a different error came up.
-			if (InitError.ErrorType != Error.Type.UnknownError)
+			if (InitError == ErrorType.None)
 			{
-				Debug.Log($"(SPCoopEmotes) Error: Mod init failed with error type '{InitError.ErrorType}'.");
-				Logger.LogError($"Mod init failed with error type '{InitError.ErrorType}'.");
-				return;
+				Debug.Log("(SPCoopEmotes) Mod initialised successfully!");
 			}
-
-			InitError = Error.None;
-			Debug.Log("(SPCoopEmotes) Mod initialised successfully!");
-			Logger.LogMessage("Mod initialised successfully!");
+			// If any errors came up.
+			else
+			{
+				string logMessage = $"(SPCoopEmotes) Error: Mod init failed with error type {{{InitError}}}!";
+				Debug.Log(logMessage);
+				Debug.LogException(new Exception(logMessage));
+			}
 		}
 
 
 		private void JollyUpdateHK(On.Player.orig_JollyUpdate orig, Player self, bool eu)
 		{
 			orig(self, eu);
-			if (InitError.Exists)
+			if (InitError != ErrorType.None)
 			{
 				return;
 			}
@@ -166,7 +168,7 @@ namespace SingleplayerCoopEmotes
 		private void JollyPointUpdateHK(On.Player.orig_JollyPointUpdate orig, Player self)
 		{
 			orig(self);
-			if (InitError.Exists)
+			if (InitError != ErrorType.None)
 			{
 				return;
 			}
@@ -185,7 +187,7 @@ namespace SingleplayerCoopEmotes
 		// (This is for the sleeping animation)
 		private void PlayerBlinkHK(On.PlayerGraphics.orig_PlayerBlink orig, PlayerGraphics self)
 		{
-			if (InitError.Exists)
+			if (InitError != ErrorType.None)
 			{
 				orig(self);
 				return;
@@ -224,8 +226,7 @@ namespace SingleplayerCoopEmotes
 			// If it wasn't able to find and edit at least one `CoopAvailable` check, then somthing went wrong.
 			if (!editSuccessful)
 			{
-				Debug.Log("(SPCoopEmotes) Error: IL edit failed!");
-				Logger.LogError("IL edit failed!");
+				InitError = ErrorType.ILEditFailed;
 			}
 		}
 	}
