@@ -29,7 +29,7 @@ namespace SingleplayerCoopEmotes
 		/// <summary>
 		/// The current mod version.
 		/// </summary>
-		public const string VERSION = "1.4.2";
+		public const string VERSION = "1.4.3";
 
 		/// <summary>
 		/// The error state from the mod's initialisation.
@@ -69,6 +69,7 @@ namespace SingleplayerCoopEmotes
 			// IL hooks to remove all `ModManager.CoopAvailable` checks for emotes.
 			IL.Player.checkInput += RemoveCoopAvailableChecks;
 			IL.Player.GraphicsModuleUpdated += RemoveCoopAvailableChecks; // todo check if this is needed
+			IL.Player.GetHeldItemDirection += RemoveCoopAvailableChecks;
 
 			// And a manual one for the `Player.RevealMap` property getter.
 			new ILHook(
