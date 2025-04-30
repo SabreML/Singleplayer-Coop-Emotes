@@ -29,7 +29,7 @@ namespace SingleplayerCoopEmotes
 		/// <summary>
 		/// The current mod version.
 		/// </summary>
-		public const string VERSION = "1.4.4";
+		public const string VERSION = "1.4.5";
 
 		/// <summary>
 		/// The error state from the mod's initialisation.
@@ -73,7 +73,7 @@ namespace SingleplayerCoopEmotes
 
 			// And a manual one for the `Player.RevealMap` property getter.
 			new ILHook(
-				typeof(Player).GetProperty("RevealMap", BindingFlags.Public | BindingFlags.Instance).GetGetMethod(),
+				typeof(Player).GetProperty("RevealMap", BindingFlags.Public|BindingFlags.Instance).GetGetMethod(),
 				new ILContext.Manipulator(RemoveCoopAvailableChecks)
 			);
 		}
