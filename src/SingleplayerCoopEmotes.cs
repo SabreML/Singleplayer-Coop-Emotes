@@ -29,7 +29,7 @@ namespace SingleplayerCoopEmotes
 		/// <summary>
 		/// The current mod version.
 		/// </summary>
-		public const string VERSION = "1.4.5";
+		public const string VERSION = "1.4.6";
 
 		/// <summary>
 		/// The error state from the mod's initialisation.
